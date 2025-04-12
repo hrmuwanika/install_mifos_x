@@ -29,111 +29,15 @@ java -version
 
 sleep 10
 
-# Install MariaDB server
-sudo apt install mariadb-server mariadb-client -y
-sudo systemctl enable mariadb.service
-sudo systemctl start mariadb.service
-
-sudo mysql_secure_installation
-
-maridb -u root -p 
-CREATE database `fineract_tenants` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-CREATE database `fineract_default` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-exit
-
-# Download Tomcat 10
+# Download Tomcat 10 core
 sudo mkdir /usr/share/tomcat10
-wget https://dlcdn.apache.org/tomcat/tomcat-10/v10.1.34/bin/apache-tomcat-10.1.34.zip 
-unzip apache-tomcat-10.1.34.zip
-cd apache-tomcat-10.1.34
-sudo mv * /usr/share/tomcat10
-
-
-
-# Enable SSL 
-sudo keytool -genkey -keyalg RSA -keysize 2048 -alias tomcat -validity 3650 -keystore /usr/share/tomcat.keystore \
- -noprompt -dname "CN=${HOSTNAME}, OU=Mifos, O=Company, L=London, S=London, C=GB" -storepass xyz123 -keypass xyz123
-
-
-sudo cat <<EOF > /usr/share/tomcat10/conf/server.xml
-
-<?xml version='1.0' encoding='utf-8'?>
-<Server port="8005" shutdown="SHUTDOWN">
-
-<Listener className="org.apache.catalina.core.AprLifecycleListener" SSLEngine="on" />
-<Listener className="org.apache.catalina.core.JreMemoryLeakPreventionListener" />
-<Listener className="org.apache.catalina.mbeans.GlobalResourcesLifecycleListener" />
-<Listener className="org.apache.catalina.core.ThreadLocalLeakPreventionListener" />
-<GlobalNamingResources>
-<Resource name="UserDatabase" auth="Container"
-type="org.apache.catalina.UserDatabase" description="User database that can be updated and saved"
-factory="org.apache.catalina.users.MemoryUserDatabaseFactory" pathname="conf/tomcat-users.xml" />
-
-<Resource
-type="javax.sql.DataSource" name="jdbc/fineract_tenants" factory="org.apache.tomcat.jdbc.pool.DataSourceFactory"
-driverClassName="com.mysql.cj.jdbc.Driver" url="jdbc:mysql://localhost:3306/fineract_tenants"
-username="root" password="mysql" initialSize="3" maxActive="15" maxIdle="6" minIdle="3" validationQuery="SELECT 1"
-testOnBorrow="true" testOnReturn="true" testWhileIdle="true" timeBetweenEvictionRunsMillis="30000" 
-minEvictableIdleTimeMillis="60000" logAbandoned="true" suspectTimeout="60" />
-</GlobalNamingResources>
-<Service name="Catalina">
-
-<Connector
-protocol="org.apache.coyote.http11.Http11NioProtocol"
-port="443" maxThreads="200" scheme="https" secure="true" SSLEnabled="true"
-keystoreFile="/usr/share/tomcat.keystore" keystorePass="xyz123"
-clientAuth="false" sslProtocol="TLS" URIEncoding="UTF-8" compression="force"
-acceptCount="100" minSpareThreads="25" maxSpareThreads="75" enableLookups="false"
-disableUploadTimeout="true" maxHttpHeaderSize="8192"
-compressableMimeType="text/html,text/xml,text/plain,text/javascript,text/css"/>
-
-<Engine name="Catalina" defaultHost="localhost">
-
-<Realm className="org.apache.catalina.realm.LockOutRealm">
-<Realm className="org.apache.catalina.realm.UserDatabaseRealm" resourceName="UserDatabase"/>
-</Realm>
-
-<Host name="localhost" appBase="webapps" unpackWARs="true" autoDeploy="true">
-<Valve className="org.apache.catalina.valves.AccessLogValve" directory="logs"
-prefix="localhost_access_log." suffix=".log"
-pattern="%h %l %u %t &quot;%r&quot; %s %b" /></Host>
-</Engine>
-</Service>
-</Server>
-
-EOF
-
-# Add required libraries, including the Drizzle and MySQL Connector JARs, to the Tomcat library.
-sudo wget https://repo1.maven.org/maven2/org/drizzle/jdbc/drizzle-jdbc/1.4/drizzle-jdbc-1.4.jar -O /usr/share/tomcat9/lib/drizzle-jdbc-1.4.jar
-cd /tmp
-wget https://downloads.mysql.com/archives/get/p/3/file/mysql-connector-java-8.0.21.tar.gz 
-tar xzf mysql-connector-java-8.0.21.tar.gz;
-sudo mv mysql-connector-java-8.0.21/mysql-connector-java-8.0.21.jar /usr/share/tomcat9/lib/ 
-sudo rm -r mysql-connector-java-8.0.21.tar.gz mysql-connector-java-8.0.21
-
-cat <<EOF > /etc/systemd/system/tomcat10.service
-[Unit]
-Description=Tomcat 10
-After=network.target
-
-[Service]
-User=root
-Group=root
-ExecStart=/usr/share/tomcat10/bin/startup.sh
-#ExecStop=/usr/share/tomcat10/bin/shutdown.sh
-ExecStop=/usr/bin/pkill -9 -u root -x java
-WorkingDirectory=/usr/share/tomcat10
-Type=forking
-RestartSec=10
-Restart=always
-
-[Install]
-WantedBy=multi-user.target
-EOF
-
-sudo systemctl enable tomcat10
-sudo systemctl start tomcat10
-
+cd /usr/share/
+wget https://dlcdn.apache.org/tomcat/tomcat-10/v10.1.40/bin/apache-tomcat-10.1.40.zip
+unzip apache-tomcat-10.1.40.zip
+sudo rm -Rf apache-tomcat-10.1.40/webapps/ROOT/*
+sudo mv apache-tomcat-10.1.40* /usr/share/tomcat10
+sudo rm apache-tomcat-10.1.40.zip
+sudo rm -Rf apache-tomcat-10.1.40
 
 cd /home
 wget https://sourceforge.net/projects/mifos/files/Mifos%20X/mifosplatform-25.03.22.RELEASE.zip
@@ -141,6 +45,72 @@ unzip mifosplatform-25.03.22.RELEASE.zip
 cd mifosplatform-25.03.22.RELEASE
 cp -Rf ./webapp/* /usr/share/tomcat10/webapps/ROOT
 cp fineract-provider.war /usr/share/tomcat10/webapps/
-cp -Rf apps/community-app/ /usr/share/tomcat10/webapps/ 
-cp -Rf api-docs/ /usr/share/tomcat10/webapps/
+
+# Install MariaDB server
+sudo apt install mariadb-server mariadb-client -y
+sudo systemctl enable mariadb.service
+sudo systemctl start mariadb.service
+
+sudo mysql_secure_installation
+
+mariadb --user="root" --password="" -h localhost -e "CREATE database `fineract_tenants` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
+mariadb --user="root" --password="" -h localhost -e "CREATE database `fineract_default` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
+
+export FINERACT_DEFAULT_TENANTDB_PWD=se5rt67yhfgjjt
+export FINERACT_HIKARI_PASSWORD=se5rt67yhfgjjt
+export FINERACT_SERVER_SSL_ENABLED=false
+export FINERACT_SERVER_PORT=8080
+
+ ./catalina.sh run
+ 
+# Create System Unit File
+# ======================
+# Create and open a new file in the /etc/system/system under the name tomcat.service:
+sudo cat <<EOF >  /etc/systemd/system/tomcat.service
+
+[Unit]
+Description=Apache Tomcat 10 Web Application Server
+After=network.target
+ 
+[Service]
+Type=forking
+
+User=tomcat
+Group=tomcat
+
+Environment="JAVA_HOME=/usr/lib/jvm/java-1.18.0-openjdk-amd64"
+Environment="JAVA_OPTS=-Djava.security.egd=file:///dev/urandom"
+Environment="CATALINA_BASE=/usr/share/tomcat10"
+Environment="CATALINA_HOME=/usr/share/tomcat10"
+Environment="CATALINA_PID=/usr/share/tomcat10/temp/tomcat.pid"
+Environment="CATALINA_OPTS=-Xms512M -Xmx1024M -server -XX:+UseParallelGC"
+
+ExecStart=//usr/share/tomcat10/bin/startup.sh
+ExecStop=//usr/share/tomcat10/bin/shutdown.sh
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+# For the changes to take place, reload the system daemon with the command:
+sudo systemctl daemon-reload
+
+# Now, you can finally start the Tomcat service:
+sudo systemctl start tomcat.service
+sudo systemctl enable tomcat.service 
+
+# Verify the Apache Tomcat service is running with the command:
+sudo systemctl status tomcat
+
+# Adjust Firewall
+# ===============
+#  Open Port 8080 to allow traffic through it with the command:
+sudo ufw allow 8080/tcp
+
+# If the port is open, you should be able to see the Apache Tomcat splash page. Type the following in the browser window:
+echo "Access from http://server_ip:8080 or http://localhost:8080"
+echo "username: mifos"
+echo "password: se5rt67yhfgjjt"
+
+
 
