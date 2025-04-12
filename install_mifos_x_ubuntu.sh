@@ -1,3 +1,5 @@
+#!/bin/sh
+
 # Mifos X system installation
 
 # Software:
