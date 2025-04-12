@@ -65,7 +65,7 @@ export FINERACT_HIKARI_PASSWORD=skdcnwauicn2ucnaecasdsajdnizucawencascdca
 export FINERACT_SERVER_SSL_ENABLED=false
 export FINERACT_SERVER_PORT=8080
 
-sudo chmod +x catalina.sh
+sudo chmod +x /usr/share/tomcat10/bin/catalina.sh
 /usr/share/tomcat10/bin/catalina.sh run
  
 # Adjust Firewall
