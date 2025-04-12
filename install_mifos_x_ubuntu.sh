@@ -60,8 +60,8 @@ sudo systemctl start mariadb.service
 mariadb --user="root" --password="" -h localhost -e "CREATE database fineract_tenants CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
 mariadb --user="root" --password="" -h localhost -e "CREATE database fineract_default CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
 
-export FINERACT_DEFAULT_TENANTDB_PWD=se5rt67yhfgjjt
-export FINERACT_HIKARI_PASSWORD=se5rt67yhfgjjt
+export FINERACT_DEFAULT_TENANTDB_PWD=skdcnwauicn2ucnaecasdsajdnizucawencascdca
+export FINERACT_HIKARI_PASSWORD=skdcnwauicn2ucnaecasdsajdnizucawencascdca
 export FINERACT_SERVER_SSL_ENABLED=false
 export FINERACT_SERVER_PORT=8080
 
@@ -71,10 +71,12 @@ sudo chmod +x catalina.sh
 # Adjust Firewall
 # ===============
 #  Open Port 8080 to allow traffic through it with the command:
+sudo apt install -y ufw 
 sudo ufw allow 8080/tcp
+sudo ufw reload
 
 # If the port is open, you should be able to see the Apache Tomcat splash page. Type the following in the browser window:
-echo "Access from http://server_ip:8080"
+echo "Access from http://localhost:8080"
 echo "username: mifos"
 echo "password: password"
 
