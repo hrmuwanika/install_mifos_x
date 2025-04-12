@@ -24,6 +24,7 @@ sudo apt install -y gnupg ca-certificates curl unzip git nano
 # Install the Zulu JDK 17
 curl -s https://repos.azul.com/azul-repo.key | sudo gpg --dearmor -o /usr/share/keyrings/azul.gpg
 echo "deb [signed-by=/usr/share/keyrings/azul.gpg] https://repos.azul.com/zulu/deb stable main" | sudo tee /etc/apt/sources.list.d/zulu.list
+sudo apt update
 sudo apt install -y zulu17-jdk
 java -version
 
@@ -31,11 +32,14 @@ sleep 10
 
 # Download Tomcat 10 core
 sudo mkdir /usr/share/tomcat10
-cd /usr/share/
+cd /usr/src
 wget https://dlcdn.apache.org/tomcat/tomcat-10/v10.1.40/bin/apache-tomcat-10.1.40.zip
 unzip apache-tomcat-10.1.40.zip
-sudo rm -Rf apache-tomcat-10.1.40/webapps/ROOT/*
-sudo mv apache-tomcat-10.1.40* /usr/share/tomcat10
+cd apache-tomcat-10.1.40
+sudo rm -Rf ./webapps/ROOT/*
+sudo mv * /usr/share/tomcat10
+
+cd /usr/src
 sudo rm apache-tomcat-10.1.40.zip
 sudo rm -Rf apache-tomcat-10.1.40
 
@@ -53,15 +57,17 @@ sudo systemctl start mariadb.service
 
 sudo mysql_secure_installation
 
-mariadb --user="root" --password="" -h localhost -e "CREATE database `fineract_tenants` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
-mariadb --user="root" --password="" -h localhost -e "CREATE database `fineract_default` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
+mariadb --user="root" --password="" -h localhost -e "CREATE database fineract_tenants CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
+mariadb --user="root" --password="" -h localhost -e "CREATE database fineract_default CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
 
 export FINERACT_DEFAULT_TENANTDB_PWD=se5rt67yhfgjjt
 export FINERACT_HIKARI_PASSWORD=se5rt67yhfgjjt
 export FINERACT_SERVER_SSL_ENABLED=false
 export FINERACT_SERVER_PORT=8080
 
- ./catalina.sh run
+cd /usr/share/tomcat10/bin
+sudo chmod +x catalina.sh
+./catalina.sh run
  
 # Create System Unit File
 # ======================
